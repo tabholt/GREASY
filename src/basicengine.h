@@ -81,6 +81,7 @@ protected:
    * @return True if local node, false otherwise.
    */  
   bool isLocalNode(string node);
+  string slurm_partition;
 
   /**
    * Get the name of the node where the worker is asigned.

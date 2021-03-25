@@ -111,6 +111,8 @@ bool AbstractEngine::isReady() {
 }
 
 void AbstractEngine::init() {
+  n_node_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+  n_slurm_reservation_cpus = fromString(n_slurm_reservation_cpus, getenv("SLURM_NPROCS"));
   
   log->record(GreasyLog::devel, "AbstractEngine::init", "Entering...");
   
@@ -133,6 +135,23 @@ void AbstractEngine::init() {
       log->record(GreasyLog::warning, "Falling back to the default number of workers " + toString(nworkers));
       log->record(GreasyLog::warning, "Consider setting environment variable GREASY_NWORKERS to the desired cpus to use");
     }
+  }
+
+  log->record(GreasyLog::debug, "Configuration: \n" + config->printContents());
+
+  // Determine whether to use CPU binding (bool) expect 1 or 0 in config file
+  if (config->keyExists("UseCPUBinding")) {
+    usecpubinding = fromString(usecpubinding, config->getValue("UseCPUBinding"));
+    if (usecpubinding) {
+      if (n_node_cpus != n_slurm_reservation_cpus) {
+        usecpubinding = 0;
+        log->record(GreasyLog::warning, "CPU binding is not available for partial node SLURM reservations, CPU binding deactivated.");
+      }
+    }
+  } else {
+    log->record(GreasyLog::warning, "CPU binding falling back to default (deactivated)");
+    log->record(GreasyLog::warning, "Consider setting environment variable GREASY_USECPUBINDING to 0 or 1.");
+    usecpubinding = 0;
   }
   
   if (!fileErrors) {

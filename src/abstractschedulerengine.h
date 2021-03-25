@@ -102,6 +102,7 @@ protected:
    */  
   virtual void taskEpilogue(GreasyTask *task);
   
+  int worker_id;
   
   map <int,int> taskAssignation; ///<  Map that holds the task assignation to workers.
 				 ///< worker -> taskId

@@ -137,7 +137,10 @@ protected:
   string restartFile; /**< Path to the file where the restart will be written. */
   int nworkers; /**< Number of greasy workers (possibly the number of cpus available). */
   bool ready; /**< Flag to know if the engine is ready to run. */
-  
+  bool usecpubinding;
+  int n_node_cpus;
+  int n_slurm_reservation_cpus;
+
   map<int,GreasyTask*> taskMap; ///< Main task map linking the taskId (the line in the file)
 				///< with the actual GreasyTask object.
   set<int> validTasks; /**< Set containing the valid tasks read in the file. */

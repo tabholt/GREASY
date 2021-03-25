@@ -30,14 +30,26 @@ AbstractSchedulerEngine::AbstractSchedulerEngine ( const string& filename) : Abs
 }
 
 void AbstractSchedulerEngine::init() {
-    
+
   log->record(GreasyLog::devel, "AbstractSchedulerEngine::init", "Entering...");
   
   AbstractEngine::init();
   
+  if (usecpubinding) {
+    log->record(GreasyLog::info, "Creating " + toString(nworkers) + " CPU binding workers with strides for " + toString(n_node_cpus) + " CPUs." );
+  }
+  
   // Fill the freeWorkers queue
-  for (int i=1;i<=nworkers; i++) {
-    freeWorkers.push(i);
+  // If there is cpu binding it will create strides. This is only desirable if
+  // CPU numbering is done sequentially by socket. If sockets are numbered even/odd
+  // then this will create the worst possible load splitting. 
+  for (int i=0; i<nworkers; i++) {
+    if (usecpubinding) {
+      worker_id = i*n_node_cpus/nworkers; // will create evenly spaced strides
+    } else {
+      worker_id = i;
+    }
+    freeWorkers.push(worker_id);
   }
   
   log->record(GreasyLog::devel, "AbstractSchedulerEngine::init", "Exiting...");
@@ -200,8 +212,8 @@ void AbstractSchedulerEngine::taskEpilogue(GreasyTask *task) {
 
 void AbstractSchedulerEngine::getDefaultNWorkers() {
  
-  nworkers = sysconf(_SC_NPROCESSORS_ONLN);
-  if ( nworkers>4 ) nworkers=4;
+  nworkers = n_slurm_reservation_cpus;
+  if ( nworkers>4 ) nworkers/=2;
   
   log->record(GreasyLog::devel, "AbstractSchedulerEngine::getDefaultNWorkers", "Default nworkers: " + toString(nworkers));
   

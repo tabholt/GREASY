@@ -47,6 +47,7 @@ void BasicEngine::init() {
   
   gethostname(hostname, sizeof(hostname));
   masterHostname=hostname;
+  slurm_partition = getenv("SLURM_JOB_PARTITION");
 
   // Setup the nodelist
   if (config->keyExists("NodeList")) {
@@ -200,8 +201,13 @@ int BasicEngine::executeTask(GreasyTask *task, int worker) {
 	} 
     }
   }
+
+  if (usecpubinding) {
+    command = "srun -n 1 -N 1 --partition=" + slurm_partition + " -w " + node + " --cpu-bind=map_cpu:" + toString(worker) + " ";
+  }
   
   command += task->getCommand();
+  log->record(GreasyLog::debug, "Worker " + toString(worker) + " executing command=" + command);
   log->record(GreasyLog::devel,  "BasicEngine::executeTask[" + toString(worker) +"]", "Task " 
 		      + toString(task->getTaskId()) + " on node " + node + " command: " + command);
   ret =  system(command.c_str());
